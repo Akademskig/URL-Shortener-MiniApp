@@ -1,0 +1,20 @@
+body {
+  color: #000;
+}
+h2 {
+  text-align: center;
+}
+.container {
+  margin-top: 20px;
+}
+.content {
+  border-bottom: solid 2px;
+  padding: 10px;
+  margin: 20px;
+}
+.description {
+  border-bottom: solid 2px;
+  font-size: 18px;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+}
