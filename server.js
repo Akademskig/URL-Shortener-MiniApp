@@ -16,14 +16,15 @@ app.get(app.use(express.static(styles)))
 app.set("view engine", "jade");
 app.set('views', views);
 
-var url = "mongodb://localhost:27017/newDb";
+var url = process.env.MONGOLAB_URI;
 var id = 1;
 mongo.connect(url, function(err, db){
     if(err){
+        console.log(err)
         throw err;
     }
     
-    db.collection("urls").drop();
+    
     var urls =db.collection("urls"); 
     
     var hostUrl;
@@ -84,7 +85,7 @@ mongo.connect(url, function(err, db){
     })
 })
     
-    
+   
     
 })
 
