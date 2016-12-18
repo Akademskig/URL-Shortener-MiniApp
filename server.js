@@ -18,16 +18,10 @@ app.set('views', views);
 
 var url = process.env.MONGOLAB_URI;
 var id = 1;
-mongo.connect(url, function(err, db){
-    if(err){
-        console.log(err)
-        throw err;
-    }
+var hostUrl;
+
     
     
-    var urls =db.collection("urls"); 
-    
-    var hostUrl;
     
     app.get('/url/*', function(req,res){
     
@@ -41,8 +35,16 @@ mongo.connect(url, function(err, db){
     
     if(validUrl.isUri(origUrl)){
         console.log('url is valid' + origUrl);
+        
+        mongo.connect(url, function(err, db){
+            if(err){
+                console.log(err)
+                throw err;
+            }
     
-         urls.findOne({"original-url": origUrl}).then(function(found){
+            var urls =db.collection("urls"); 
+    
+            urls.findOne({"original-url": origUrl}).then(function(found){
             if(found){
                delete found['_id']
                var original =found["original-url"];
@@ -64,6 +66,8 @@ mongo.connect(url, function(err, db){
                 })
                 id++;
             }
+            db.close();
+            })
         })
     }
     else{
@@ -74,20 +78,28 @@ mongo.connect(url, function(err, db){
     
     app.get('/*', function(req,res){
         console.log(req.headers.host + req.url)
-        urls.findOne({"short-url": hostUrl + req.url}).then(function(found){
-            if(found){
-                console.log(found["original-url"])
-                res.redirect(found["original-url"]);
+        mongo.connect(url, function(err, db){
+            if(err){
+                console.log(err)
+                throw err;
             }
-            else
-            res.send("Short url was not found");
+            var urls=db.collection('urls');
+            urls.findOne({"short-url": hostUrl + req.url}).then(function(found){
+                if(found){
+                    console.log(found["original-url"])
+                    res.redirect(found["original-url"]);
+                }
+                else
+                res.send("Short url was not found");
+            })
+            db.close();
         })
     })
 })
     
    
     
-})
+
 
 app.get('/', function(req,res){
     
