@@ -17,12 +17,36 @@ app.use(stylus.middleware(styles));
 app.set("view engine", "jade");
 app.set('views', views);
 
-var url = process.env.MONGOLAB_URI || "mongodb://localhost:" + process.env.PORT + "/shorturls";
-var id = 1;
+var url = process.env.MONGOLAB_URI //|| "mongodb://localhost:" + process.env.PORT + "/shorturls";
+var id;
 var hostUrl;
 
 //mongoose.connect(process.env.MONGOLAB_URI);
 //var shortUrls = mongoose.model({})
+mongo.connect(url, function(err,db){
+    if(err){
+        throw err;
+    }
+    
+    var urls = db.collection('urls');
+    urls.count(function(err,count){
+        if(err){
+            throw err;
+        }
+        if(count===0){
+            id=1;
+        }
+        else{
+            urls.aggregate([{$group: {'_id': 'maxvalue', 'maxid': {$max: '$id'}}}]).toArray(function(err, result){
+                if(err){
+                    throw err;
+                }
+                id= parseInt(result[0]['maxid'])+1;
+            });
+        }
+    })
+})
+
 app.get('/', function(req,res){
     res.sendFile(html);
 })
@@ -44,7 +68,7 @@ app.get('/url/*', function(req,res){
             }
     
             var urls =db.collection("urls"); 
-    
+            
             urls.findOne({"original-url": origUrl}).then(function(found){
                 if(found){
                     delete found['_id']
@@ -53,14 +77,12 @@ app.get('/url/*', function(req,res){
                     res.render("response", {original: original, short: short, link: found["short-url"]});
                 }
                 else{
-                    var newDoc = {"original-url": origUrl, "short-url": hostUrl +'/' +id};
+                    var newDoc = {"original-url": origUrl, "short-url": hostUrl +'/' +id, "id": id};
                     urls.insert(newDoc, function(err,data){
                         if(err){
                             throw err;
                         }
                         var output=data.ops[0]
-                        delete output['_id'];
-                    
                         var original =output["original-url"];
                         var short = output["short-url"];
                         res.render("response", {original: original, short: short, link: output["short-url"]});
